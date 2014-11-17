@@ -36,13 +36,13 @@ void reader(void *arg)
     int tid = (int)arg;
     int val = 0;
     while (!stop) {
-        ta_sem_wait(&readersem);
-        ta_lock(&rmutex);
+        ta_sem_wait(&writersem);
+        ta_lock(&wmutex);
         int loc = readerloc;
         readerloc = (readerloc+1) % datalen;
-        ta_unlock(&rmutex);
+        ta_unlock(&wmutex);
         val = data[loc];
-        ta_sem_post(&writersem);
+        ta_sem_post(&readersem);
         fprintf(stderr, "reader %d read location %d\n", tid, loc);
 
         if (random() % 2 == 0)
@@ -52,19 +52,18 @@ void reader(void *arg)
 
 void writer(void *arg)
 {
+    fprintf(stderr,"in writer\n");
     int tid = (int)arg;
     int val = 1000000;
     int writerloc = 0;
     while (!stop) {
-        ta_sem_wait(&writersem);
-
-        ta_lock(&wmutex);
+        ta_sem_wait(&readersem);
+        ta_lock(&rmutex);
         int loc = writerloc;
         writerloc = (writerloc+1) % datalen;
-        ta_unlock(&wmutex);
-
+        ta_unlock(&rmutex);
         data[loc] = val++;
-        ta_sem_post(&readersem);
+        ta_sem_post(&writersem);
         fprintf(stderr, "writer %d wrote location %d\n", tid, loc);
 
         if (random() % 2 == 0)
@@ -86,7 +85,6 @@ int main(int argc, char **argv)
     assert(data);
     memset(data, 0, sizeof(int)*DATALEN);
     datalen = DATALEN;
-
     ta_sem_init(&readersem, 0);
     ta_sem_init(&writersem, DATALEN);
     ta_lock_init(&rmutex);
@@ -98,15 +96,12 @@ int main(int argc, char **argv)
         ta_create(reader, (void *)i);
         ta_create(writer, (void *)i);
     }
-
     int rv = ta_waitall();
-    assert(rv == 0);
-
+    assert(rv==0);
     ta_sem_destroy(&readersem);
     ta_sem_destroy(&writersem);
     ta_lock_destroy(&rmutex);
     ta_lock_destroy(&wmutex);
-
     free(data);
 
     return 0;

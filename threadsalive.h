@@ -8,17 +8,21 @@
 /* ***************************
         type definitions
    *************************** */
-
-typedef struct {
-
+typedef struct 
+{
+    struct node *semQ;
+    int val;
 } tasem_t;
 
-typedef struct {
-
+typedef struct
+{
+    struct node *lockQ;
+    int val;
 } talock_t;
 
-typedef struct {
-
+typedef struct
+{
+    struct node *conQueue;
 } tacond_t;
 
 

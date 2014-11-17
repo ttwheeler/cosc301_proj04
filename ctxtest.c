@@ -22,7 +22,7 @@ static void mythread(int threadid, int x)
     shared_variable += 1;
     printf("in thread %d; x is %d and shared_variable is %d\n",
            threadid, x, shared_variable);
-
+    fflush(stdout);
     /* do a context switch from thread 1 to thread 2 (or from 2 to
      * 1)  */
     int otherthread = (threadid == 1) ? 2 : 1;

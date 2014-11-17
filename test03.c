@@ -28,12 +28,12 @@ void thread1(void *v)
         fprintf(stderr, "thread1 going into cond_wait()\n");
         ta_wait(&mutex, &condv);
     }
+    ta_unlock(&mutex);
    
     fprintf(stderr, "thread1 emerged from cond_wait()\n");
     value = 42;
 
     ta_yield();
-    ta_unlock(&mutex);
     fprintf(stderr, "thread1 exiting\n");
 }
 
@@ -46,7 +46,6 @@ void thread2(void *v)
     fprintf(stderr, "thread2 not updating value, signalling thread1\n");
     ta_signal(&condv);
     ta_unlock(&mutex);
-
     ta_yield();
 
     ta_lock(&mutex);
@@ -55,7 +54,6 @@ void thread2(void *v)
     value = -1;
     ta_signal(&condv);
     ta_unlock(&mutex);
-
     fprintf(stderr, "thread2 exiting\n");
 }
 
@@ -70,10 +68,10 @@ int main(int argc, char **argv)
 
     ta_create(thread1, NULL);
     ta_create(thread2, NULL);
-
-    int rv = ta_waitall();
-    assert(rv == 0);
-    assert(value == 42);
+    
+    int rv=ta_waitall();
+    assert(rv==0);
+    assert(value==42);
 
     ta_lock_destroy(&mutex);
     ta_cond_destroy(&condv);
